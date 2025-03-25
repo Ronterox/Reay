@@ -8,7 +8,29 @@
 #define Vec2(x, y)                                                                                                     \
 	(struct Vector2) { x, y }
 
-Vector2 GetSafeZone(int limit, int trapsAmount, Vector2 trapPositions[]) {
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
+#define CELLS_LIMIT 5.
+
+#define SIZEW SCREEN_WIDTH / CELLS_LIMIT
+#define SIZEH SCREEN_HEIGHT / CELLS_LIMIT
+#define SPRITE_SIZE SIZEW - SIZEH
+
+#define TRAPS_AMOUNT 10
+#define MOUSESIZE 10
+
+typedef struct State {
+	Vector2 playerPos;
+	Vector2 spritePos;
+	bool isDead;
+
+	Vector2 trapPositions[TRAPS_AMOUNT];
+	Vector2 trapSize;
+	Vector2 safeZone;
+	int score;
+} State;
+
+Vector2 GetSafeZone(const int limit, const int trapsAmount, const Vector2 trapPositions[]) {
 	bool isFree;
 	Vector2 safeZone;
 
@@ -28,138 +50,122 @@ Vector2 GetSafeZone(int limit, int trapsAmount, Vector2 trapPositions[]) {
 	return safeZone;
 }
 
-void run_game() {
-	// Initialization
-	//--------------------------------------------------------------------------------------
+void Update(State *s) {
+	const Rectangle safeZoneRect = {SIZEW * s->safeZone.x, SIZEH * s->safeZone.y, SIZEW, SIZEH};
+	const Vector2 targetPos = {s->playerPos.x * SIZEW + SIZEW / 2., s->playerPos.y * SIZEH + SIZEH / 2.};
+	const Vector2 trapTargetSize = {SIZEW, SIZEH};
+
+	const float trapSizeDistance = Vector2Distance(s->trapSize, trapTargetSize);
+
+	if (Vector2Distance(s->spritePos, targetPos) > 1) {
+		s->spritePos = Vector2Lerp(s->spritePos, targetPos, 0.1);
+	}
+
+	if (!s->isDead && CheckCollisionCircleRec(s->spritePos, SPRITE_SIZE, safeZoneRect)) {
+		s->score += 100;
+	}
+
+	if (trapSizeDistance > 0.1) {
+		if (!s->isDead && trapSizeDistance < 50.) {
+			fori(i, TRAPS_AMOUNT) {
+				const Rectangle cell = {SIZEW * s->trapPositions[i].x, SIZEH * s->trapPositions[i].y, SIZEW, SIZEH};
+				if (CheckCollisionCircleRec(s->spritePos, SPRITE_SIZE, cell)) {
+					s->isDead = true;
+					break;
+				}
+			}
+		}
+		s->trapSize = Vector2Lerp(s->trapSize, trapTargetSize, 0.025);
+	} else {
+		s->trapSize = Vec2(0, 0);
+		fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
+		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
+	}
+
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+		forij(i, j, CELLS_LIMIT) {
+			const Rectangle cell = {SIZEW * i, SIZEH * j, SIZEW, SIZEH};
+			if (CheckCollisionCircleRec(GetMousePosition(), 1, cell)) {
+				s->playerPos = Vec2(i, j);
+				break;
+			}
+		}
+	}
+
+	if (IsKeyPressed(KEY_R)) {
+		s->isDead = false;
+		s->playerPos = Vec2(0, 0);
+		s->trapSize = Vec2(0, 0);
+		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
+		s->score = 0;
+	}
+}
+
+void Draw(State *s) {
+	const Rectangle safeZoneRect = {SIZEW * s->safeZone.x, SIZEH * s->safeZone.y, SIZEW, SIZEH};
+
+	BeginDrawing();
+	ClearBackground(BLACK);
+
+	forij(i, j, CELLS_LIMIT) {
+		DrawRectangle(SIZEW * i, SIZEH * j, SIZEW, SIZEH, (i + j) % 2 == 0 ? RED : BLUE);
+		fori(k, TRAPS_AMOUNT) {
+			const Vector2 trapPos = s->trapPositions[k];
+			if (trapPos.x == i && trapPos.y == j) {
+				DrawRectangle(SIZEW * i, SIZEH * j, s->trapSize.x, s->trapSize.y, ORANGE);
+				break;
+			}
+		}
+	}
+
+	DrawRectangleRec(safeZoneRect, GREEN);
+
+	if (!s->isDead) {
+		DrawCircleV(s->spritePos, SPRITE_SIZE, YELLOW);
+	} else {
+		DrawText("You died", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 24, WHITE);
+	}
+
+	DrawCircleV(GetMousePosition(), MOUSESIZE, WHITE);
+	DrawText(TextFormat("Score: %d", s->score), 10, 10, 24, WHITE);
+
+	EndDrawing();
+}
+
+State InitGame(void) {
 	SetTraceLogLevel(LOG_ERROR);
-
-	const int screenWidth = 800;
-	const int screenHeight = 600;
-
-	const int limit = 5;
-	const int sizew = screenWidth / limit;
-	const int sizeh = screenHeight / limit;
-	const int spriteSize = sizew - sizeh;
-
-	const Vector2 trapTargetSize = {sizew, sizeh};
-	const int mousesize = 10;
-	const int trapsAmount = 10;
-
-	InitWindow(screenWidth, screenHeight, "Raey");
+	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raey");
 
 	HideCursor();
 	SetTargetFPS(60);
 	SetRandomSeed(2500);
 
-	Vector2 playerPos = {0, 0};
-	Vector2 spritePos = {playerPos.x * sizew + sizew / 2., playerPos.y * sizeh + sizeh / 2.};
+	State state = {
+		.playerPos = {0, 0},
+		.spritePos = {SIZEW / 2., SIZEH / 2.},
+		.isDead = false,
 
-	bool isDead = false;
+		.trapPositions = {{0}},
+		.trapSize = {0, 0},
+		.safeZone = {0, 0},
+		.score = 0,
+	};
 
-	Vector2 trapPositions[trapsAmount];
-	Vector2 trapSize = {0, 0};
-	fori(i, trapsAmount) { trapPositions[i] = Vec2(rng(limit), rng(limit)); }
+	fori(i, TRAPS_AMOUNT) { state.trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
+	state.safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, state.trapPositions);
 
-	Vector2 safeZone = GetSafeZone(limit, trapsAmount, trapPositions);
-	int score = 0;
-
-	//--------------------------------------------------------------------------------------
-
-	// Main game loop
-	while (!WindowShouldClose()) // Detect window close button or ESC key
-	{
-		// Update
-		//----------------------------------------------------------------------------------
-
-		const Vector2 mouse = {GetMousePosition().x, GetMousePosition().y};
-		const Vector2 targetPos = {playerPos.x * sizew + sizew / 2., playerPos.y * sizeh + sizeh / 2.};
-		const float trapSizeDistance = Vector2Distance(trapSize, trapTargetSize);
-
-		const Rectangle safeZoneRect = {sizew * safeZone.x, sizeh * safeZone.y, sizew, sizeh};
-
-		if (Vector2Distance(spritePos, targetPos) > 1) {
-			spritePos = Vector2Lerp(spritePos, targetPos, 0.1);
-		}
-
-		if (!isDead && CheckCollisionCircleRec(spritePos, spriteSize, safeZoneRect)) {
-			score += 100;
-		}
-
-		if (trapSizeDistance > 0.1) {
-			if (!isDead && trapSizeDistance < 50.) {
-				fori(i, trapsAmount) {
-					const Rectangle cell = {sizew * trapPositions[i].x, sizeh * trapPositions[i].y, sizew, sizeh};
-					if (CheckCollisionCircleRec(spritePos, spriteSize, cell)) {
-						isDead = true;
-						break;
-					}
-				}
-			}
-			trapSize = Vector2Lerp(trapSize, trapTargetSize, 0.025);
-		} else {
-			trapSize = Vec2(0, 0);
-			fori(i, trapsAmount) { trapPositions[i] = Vec2(rng(limit), rng(limit)); }
-			safeZone = GetSafeZone(limit, trapsAmount, trapPositions);
-		}
-
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-			forij(i, j, limit) {
-				const Rectangle cell = {sizew * i, sizeh * j, sizew, sizeh};
-				if (CheckCollisionCircleRec(mouse, 1, cell)) {
-					playerPos = Vec2(i, j);
-					break;
-				}
-			}
-		}
-
-		if (IsKeyPressed(KEY_R)) {
-			isDead = false;
-			playerPos = Vec2(0, 0);
-			trapSize = Vec2(0, 0);
-			safeZone = GetSafeZone(limit, trapsAmount, trapPositions);
-			score = 0;
-		}
-
-		// Draw
-		//----------------------------------------------------------------------------------
-		BeginDrawing();
-		ClearBackground(BLACK);
-
-		forij(i, j, limit) {
-			DrawRectangle(sizew * i, sizeh * j, sizew, sizeh, (i + j) % 2 == 0 ? RED : BLUE);
-			fori(k, trapsAmount) {
-				const Vector2 trapPos = trapPositions[k];
-				if (trapPos.x == i && trapPos.y == j) {
-					DrawRectangle(sizew * i, sizeh * j, trapSize.x, trapSize.y, ORANGE);
-					break;
-				}
-			}
-		}
-
-		DrawRectangleRec(safeZoneRect, GREEN);
-
-		if (!isDead) {
-			DrawCircleV(spritePos, spriteSize, YELLOW);
-		} else {
-			DrawText("You died", screenWidth / 2, screenHeight / 2, 24, WHITE);
-		}
-
-		DrawCircleV(mouse, mousesize, WHITE);
-		DrawText(TextFormat("Score: %d", score), 10, 10, 24, WHITE);
-
-		EndDrawing();
-		//----------------------------------------------------------------------------------
-	}
-
-	// De-Initialization
-	//--------------------------------------------------------------------------------------
-
-	CloseWindow(); // Close window and OpenGL context
-
-	//--------------------------------------------------------------------------------------
+	return state;
 }
 
 int main(void) {
-	run_game();
+	State state = InitGame();
+
+	while (!WindowShouldClose()) // Detect window close button or ESC key
+	{
+		Update(&state);
+		Draw(&state);
+	}
+
+	CloseWindow(); // Close window and OpenGL context
 	return 0;
 }

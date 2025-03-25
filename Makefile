@@ -7,13 +7,18 @@ LIBS_PATH=-I./vcpkg_installed/x64-linux/include -L./vcpkg_installed/x64-linux/li
 all: run clean
 
 main:
-	$(CC) $(CFLAGS) src/main.c -o main $(LIBS_PATH) $(CLIBS)
+	$(CC) $(CFLAGS) src/$@.c -o $@ $(LIBS_PATH) $(CLIBS)
 
-python:
-	$(CC) -shared -o aigame.so -fPIC src/pylib.c $(python3-config --cflags --ldflags) $(LIBS_PATH) $(CLIBS)
+aigame.so:
+	$(CC) -shared -o $@ -fPIC src/pylib.c $(python3-config --cflags --ldflags) $(LIBS_PATH) $(CLIBS)
+
+run-python: main.py aigame.so
+	python3 $<
+	rm -f aigame.so
 
 run: main
-	./main
+	./$<
 
+.PHONY: clean
 clean:
 	rm -f main aigame.so
