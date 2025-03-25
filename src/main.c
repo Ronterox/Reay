@@ -28,12 +28,11 @@ Vector2 GetSafeZone(int limit, int trapsAmount, Vector2 trapPositions[]) {
 	return safeZone;
 }
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
-int main(void) {
+void run_game() {
 	// Initialization
 	//--------------------------------------------------------------------------------------
+	SetTraceLogLevel(LOG_ERROR);
+
 	const int screenWidth = 800;
 	const int screenHeight = 600;
 
@@ -158,6 +157,9 @@ int main(void) {
 	CloseWindow(); // Close window and OpenGL context
 
 	//--------------------------------------------------------------------------------------
+}
 
+int main(void) {
+	run_game();
 	return 0;
 }
