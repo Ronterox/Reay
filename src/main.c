@@ -1,4 +1,7 @@
 #include "raylib.h"
+#include "raymath.h"
+
+#define fori(i, n) for (int i = 0; i < n; ++i)
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -9,11 +12,23 @@ int main(void) {
 	const int screenWidth = 800;
 	const int screenHeight = 600;
 
+	const int limit = 5;
+	const int sizew = screenWidth / limit;
+	const int sizeh = screenHeight / limit;
+
+	const int mousesize = 10;
+
 	InitWindow(screenWidth, screenHeight, "Raey");
+
+	HideCursor();
+	SetTargetFPS(60);
 
 	// TODO: Load resources / Initialize variables at this point
 
-	SetTargetFPS(60);
+	Vector2 playerPos = {0, 0};
+	Vector2 spritePos = {playerPos.x * sizew + sizew / 2., playerPos.y * sizeh + sizeh / 2.};
+	Vector2 trapPos = {0, 0};
+
 	//--------------------------------------------------------------------------------------
 
 	// Main game loop
@@ -24,15 +39,44 @@ int main(void) {
 		// TODO: Update variables / Implement example logic at this point
 		//----------------------------------------------------------------------------------
 
+		const Vector2 mouse = {GetMousePosition().x, GetMousePosition().y};
+		const Vector2 targetPos = {playerPos.x * sizew + sizew / 2., playerPos.y * sizeh + sizeh / 2.};
+
+		if (spritePos.x != targetPos.x || spritePos.y != targetPos.y) {
+			spritePos = Vector2Lerp(spritePos, targetPos, 0.1);
+		}
+
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			fori(i, limit) {
+				fori(j, limit) {
+					const Rectangle cell = {sizew * i, sizeh * j, sizew, sizeh};
+					if (CheckCollisionCircleRec(mouse, 1, cell)) {
+						playerPos = (struct Vector2){i, j};
+						break;
+					}
+				}
+			}
+		}
+
 		// Draw
 		//----------------------------------------------------------------------------------
 		BeginDrawing();
 
-		ClearBackground(PINK);
+		ClearBackground(BLACK);
 
 		// TODO: Draw everything that requires to be drawn at this point:
 
-		DrawText("Congrats! You created your first window!", 190, screenHeight * 0.5, 20, BLACK); // Example
+		fori(i, limit) {
+			fori(j, limit) {
+				DrawRectangle(sizew * i, sizeh * j, sizew, sizeh, (i + j) % 2 == 0 ? RED : BLUE);
+				if (trapPos.x == i && trapPos.y == j) {
+					DrawRectangle(sizew * i + sizew * 0.1, sizeh * j + sizeh * 0.1, sizew * 0.8, sizeh * 0.8, ORANGE);
+				}
+			}
+		}
+
+		DrawCircleV(spritePos, sizew - sizeh, YELLOW);
+		DrawCircleV(mouse, mousesize, GREEN);
 
 		EndDrawing();
 		//----------------------------------------------------------------------------------
