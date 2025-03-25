@@ -3,7 +3,29 @@
 # {"init", init, METH_NOARGS, "Initializes the game"},
 # {"close", close_window, METH_NOARGS, "Closes the window"},
 
-def update():
+# typedef struct {
+# 	PyObject_HEAD;
+# 	PyObject *cells;	  // List of Vector2
+# 	PyObject *traps;	  // List of Vector2
+# 	PyObject *safezone;	  // Vector2
+# 	PyObject *player_pos; // Vector2
+# 	int score;
+# } GameStateObject;
+
+class Vector2:
+    x: int
+    y: int
+
+
+class GameState:
+    cells: list[Vector2]
+    traps: list[Vector2]
+    safezone: Vector2
+    player_pos: Vector2
+    score: int
+
+
+def update() -> GameState:
     """Updates the game"""
     pass
 

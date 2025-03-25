@@ -5,8 +5,8 @@ class Game:
     def __init__(self):
         aigame.init()
 
-    def step(self):
-        aigame.update()
+    def step(self) -> aigame.GameState:
+        return aigame.update()
 
     def render(self):
         aigame.draw()
@@ -17,8 +17,6 @@ class Game:
 
 game = Game()
 
-while True:
-    game.step()
-    game.render()
+print(game.step().cells)
 
 game.close()
