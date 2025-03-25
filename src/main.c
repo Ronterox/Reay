@@ -27,7 +27,9 @@ int main(void) {
 
 	Vector2 playerPos = {0, 0};
 	Vector2 spritePos = {playerPos.x * sizew + sizew / 2., playerPos.y * sizeh + sizeh / 2.};
+
 	Vector2 trapPos = {0, 0};
+	Vector2 trapSize = {0, 0};
 
 	//--------------------------------------------------------------------------------------
 
@@ -41,9 +43,18 @@ int main(void) {
 
 		const Vector2 mouse = {GetMousePosition().x, GetMousePosition().y};
 		const Vector2 targetPos = {playerPos.x * sizew + sizew / 2., playerPos.y * sizeh + sizeh / 2.};
+		const Vector2 trapTargetSize = {sizew, sizeh};
 
-		if (spritePos.x != targetPos.x || spritePos.y != targetPos.y) {
+		if (Vector2Distance(spritePos, targetPos) > 1) {
 			spritePos = Vector2Lerp(spritePos, targetPos, 0.1);
+		}
+
+		if (Vector2Distance(trapSize, trapTargetSize) > 0.1) {
+			trapSize = Vector2Lerp(trapSize, trapTargetSize, 0.05);
+		} else {
+			trapSize = (struct Vector2){0, 0};
+			trapPos.x = GetRandomValue(0, limit - 1);
+			trapPos.y = GetRandomValue(0, limit - 1);
 		}
 
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -70,7 +81,7 @@ int main(void) {
 			fori(j, limit) {
 				DrawRectangle(sizew * i, sizeh * j, sizew, sizeh, (i + j) % 2 == 0 ? RED : BLUE);
 				if (trapPos.x == i && trapPos.y == j) {
-					DrawRectangle(sizew * i + sizew * 0.1, sizeh * j + sizeh * 0.1, sizew * 0.8, sizeh * 0.8, ORANGE);
+					DrawRectangle(sizew * i, sizeh * j, trapSize.x, trapSize.y, ORANGE);
 				}
 			}
 		}
