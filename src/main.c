@@ -95,9 +95,12 @@ void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 	if (reset) {
 		s->isDead = false;
 		s->playerPos = Vec2(0, 0);
+		s->spritePos = Vec2(0, 0);
 		s->trapSize = Vec2(0, 0);
 		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
 		s->score = 0;
+
+        fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
 	}
 }
 

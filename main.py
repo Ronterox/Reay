@@ -27,11 +27,13 @@ class Game:
 
 game = Game()
 
-state, reward, done = game.reset()
 
-while not done:
-    state, reward, done = game.step()
-    print(reward)
-    game.render()
+for i in range(10):
+    state, reward, done = game.reset()
+
+    while not done:
+        state, reward, done = game.step()
+        print(reward)
+        game.render()
 
 game.close()
