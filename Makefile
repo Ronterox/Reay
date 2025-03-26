@@ -12,9 +12,8 @@ main:
 aigame.so:
 	$(CC) -shared -o $@ -fPIC src/pylib.c $(python3-config --cflags --ldflags) $(LIBS_PATH) $(CLIBS)
 
-run-python: main.py aigame.so
+run-python: main.py clean aigame.so
 	python3 $<
-	rm -f aigame.so
 
 run: main
 	./$<

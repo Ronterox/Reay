@@ -50,7 +50,7 @@ Vector2 GetSafeZone(const int limit, const int trapsAmount, const Vector2 trapPo
 	return safeZone;
 }
 
-void Update(State *s) {
+void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 	const Rectangle safeZoneRect = {SIZEW * s->safeZone.x, SIZEH * s->safeZone.y, SIZEW, SIZEH};
 	const Vector2 targetPos = {s->playerPos.x * SIZEW + SIZEW / 2., s->playerPos.y * SIZEH + SIZEH / 2.};
 	const Vector2 trapTargetSize = {SIZEW, SIZEH};
@@ -82,17 +82,17 @@ void Update(State *s) {
 		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
 	}
 
-	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+	if (click) {
 		forij(i, j, CELLS_LIMIT) {
 			const Rectangle cell = {SIZEW * i, SIZEH * j, SIZEW, SIZEH};
-			if (CheckCollisionCircleRec(GetMousePosition(), 1, cell)) {
+			if (CheckCollisionCircleRec(mouse, 1, cell)) {
 				s->playerPos = Vec2(i, j);
 				break;
 			}
 		}
 	}
 
-	if (IsKeyPressed(KEY_R)) {
+	if (reset) {
 		s->isDead = false;
 		s->playerPos = Vec2(0, 0);
 		s->trapSize = Vec2(0, 0);
@@ -101,7 +101,7 @@ void Update(State *s) {
 	}
 }
 
-void Draw(State *s) {
+void Draw(State *s, const Vector2 mouse) {
 	const Rectangle safeZoneRect = {SIZEW * s->safeZone.x, SIZEH * s->safeZone.y, SIZEW, SIZEH};
 
 	BeginDrawing();
@@ -126,7 +126,7 @@ void Draw(State *s) {
 		DrawText("You died", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 24, WHITE);
 	}
 
-	DrawCircleV(GetMousePosition(), MOUSESIZE, WHITE);
+	DrawCircleV(mouse, MOUSESIZE, WHITE);
 	DrawText(TextFormat("Score: %d", s->score), 10, 10, 24, WHITE);
 
 	EndDrawing();
@@ -162,8 +162,9 @@ int main(void) {
 
 	while (!WindowShouldClose()) // Detect window close button or ESC key
 	{
-		Update(&state);
-		Draw(&state);
+		const Vector2 mouse = GetMousePosition();
+		Update(&state, mouse, IsMouseButtonPressed(MOUSE_LEFT_BUTTON), IsKeyPressed(KEY_R));
+		Draw(&state, mouse);
 	}
 
 	CloseWindow(); // Close window and OpenGL context
