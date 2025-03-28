@@ -100,7 +100,7 @@ void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
 		s->score = 0;
 
-        fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
+		fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
 	}
 }
 

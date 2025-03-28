@@ -1,0 +1,10 @@
+[project]
+name = "reay"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "gym>=0.26.2",
+    "typing-extensions>=4.13.0",
+]
