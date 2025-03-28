@@ -15,8 +15,8 @@ aigame.so:
 run-python: main.py clean aigame.so
 	python3 $<
 
-run: main
-	./$<
+run: clean main
+	./main
 
 .PHONY: clean
 clean:

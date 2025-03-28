@@ -1,5 +1,8 @@
 #include "raylib.h"
 #include "raymath.h"
+#include <assert.h>
+#include <stddef.h>
+#include <sys/types.h>
 
 #define fori(i, n) for (int i = 0; i < n; ++i)
 #define forij(i, j, n) fori(i, n) fori(j, n)
@@ -27,18 +30,18 @@ typedef struct State {
 	Vector2 trapPositions[TRAPS_AMOUNT];
 	Vector2 trapSize;
 	Vector2 safeZone;
-	int score;
+	uint score;
 } State;
 
-Vector2 GetSafeZone(const int limit, const int trapsAmount, const Vector2 trapPositions[]) {
+Vector2 GetSafeZone(const Vector2 trapPositions[]) {
 	bool isFree;
 	Vector2 safeZone;
 
 	do {
 		isFree = true;
-		safeZone = Vec2(rng(limit), rng(limit));
+		safeZone = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT));
 
-		fori(k, trapsAmount) {
+		fori(k, TRAPS_AMOUNT) {
 			const Vector2 trapPos = trapPositions[k];
 			if (trapPos.x == safeZone.x && trapPos.y == safeZone.y) {
 				isFree = false;
@@ -47,10 +50,14 @@ Vector2 GetSafeZone(const int limit, const int trapsAmount, const Vector2 trapPo
 		}
 	} while (!isFree);
 
+	assert(safeZone.x >= 0 && safeZone.y >= 0 && safeZone.x < CELLS_LIMIT && safeZone.y < CELLS_LIMIT &&
+		   "Safe zone out of bounds");
 	return safeZone;
 }
 
 void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
+	assert(s != NULL && "State is null");
+
 	const Rectangle safeZoneRect = {SIZEW * s->safeZone.x, SIZEH * s->safeZone.y, SIZEW, SIZEH};
 	const Vector2 targetPos = {s->playerPos.x * SIZEW + SIZEW / 2., s->playerPos.y * SIZEH + SIZEH / 2.};
 	const Vector2 trapTargetSize = {SIZEW, SIZEH};
@@ -79,7 +86,7 @@ void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 	} else {
 		s->trapSize = Vec2(0, 0);
 		fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
-		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
+		s->safeZone = GetSafeZone(s->trapPositions);
 	}
 
 	if (click) {
@@ -97,7 +104,7 @@ void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 		s->playerPos = Vec2(0, 0);
 		s->spritePos = Vec2(0, 0);
 		s->trapSize = Vec2(0, 0);
-		s->safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, s->trapPositions);
+		s->safeZone = GetSafeZone(s->trapPositions);
 		s->score = 0;
 
 		fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
@@ -105,6 +112,8 @@ void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 }
 
 void Draw(State *s, const Vector2 mouse) {
+	assert(s != NULL && "State is null");
+
 	const Rectangle safeZoneRect = {SIZEW * s->safeZone.x, SIZEH * s->safeZone.y, SIZEW, SIZEH};
 
 	BeginDrawing();
@@ -155,7 +164,7 @@ State InitGame(void) {
 	};
 
 	fori(i, TRAPS_AMOUNT) { state.trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
-	state.safeZone = GetSafeZone(CELLS_LIMIT, TRAPS_AMOUNT, state.trapPositions);
+	state.safeZone = GetSafeZone(state.trapPositions);
 
 	return state;
 }
