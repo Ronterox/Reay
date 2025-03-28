@@ -11,8 +11,8 @@
 #define Vec2(x, y)                                                                                                     \
 	(struct Vector2) { x, y }
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 800.
+#define SCREEN_HEIGHT 600.
 #define CELLS_LIMIT 5.
 
 #define SIZEW SCREEN_WIDTH / CELLS_LIMIT

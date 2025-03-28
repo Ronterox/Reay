@@ -1,6 +1,7 @@
 #include "main.c"
 #include <python3.10/Python.h>
 #include <python3.10/structmember.h>
+#include <stdio.h>
 
 typedef struct {
 	PyObject_HEAD;
@@ -25,7 +26,7 @@ static PyMemberDef GameState_members[] = {
 	{"traps", T_OBJECT_EX, offsetof(GameStateObject, traps), 0, "List of trap positions"},
 	{"safezone", T_OBJECT_EX, offsetof(GameStateObject, safezone), 0, "Safe zone position"},
 	{"player_pos", T_OBJECT_EX, offsetof(GameStateObject, player_pos), 0, "Player position"},
-	{"is_dead", T_INT, offsetof(GameStateObject, is_dead), 0, "Is player dead"},
+	{"is_dead", T_BOOL, offsetof(GameStateObject, is_dead), 0, "Is player dead"},
 	{"score", T_INT, offsetof(GameStateObject, score), 0, "Current score"},
 	{NULL},
 };
@@ -47,6 +48,12 @@ static int Vector2_Init(Vector2Object *self, PyObject *args, PyObject *kwds) {
 	return 0;
 }
 
+static PyMemberDef Vector2_members[] = {
+	{"x", T_INT, offsetof(Vector2Object, x), 0, "X coordinate"},
+	{"y", T_INT, offsetof(Vector2Object, y), 0, "Y coordinate"},
+	{NULL},
+};
+
 static PyTypeObject Vector2Type = {
 	PyVarObject_HEAD_INIT(NULL, 0).tp_name = "aigame.Vector2",
 	.tp_basicsize = sizeof(Vector2Object),
@@ -56,6 +63,7 @@ static PyTypeObject Vector2Type = {
 	.tp_init = (initproc)Vector2_Init,
 	.tp_str = (reprfunc)Vector2_Str,
 	.tp_repr = (reprfunc)Vector2_Str,
+	.tp_members = Vector2_members,
 };
 
 static PyObject *Vector2_New(int x, int y) {
@@ -96,7 +104,8 @@ static PyObject *update(PyObject *self, PyObject *args) {
 	}
 
 	obj->safezone = Vector2_New(state.safeZone.x, state.safeZone.y);
-	obj->player_pos = Vector2_New(state.playerPos.x, state.playerPos.y);
+	obj->player_pos = Vector2_New(state.spritePos.x / (SCREEN_WIDTH / CELLS_LIMIT),
+								  state.spritePos.y / (SCREEN_HEIGHT / CELLS_LIMIT));
 	obj->is_dead = state.isDead;
 	obj->score = state.score;
 
@@ -106,7 +115,7 @@ static PyObject *update(PyObject *self, PyObject *args) {
 static PyObject *draw(PyObject *self, PyObject *args) {
 	Vector2Object mouse;
 
-	if (!PyArg_ParseTuple(args, "O!", &Vector2Type, &mouse)) return NULL;
+	if (!PyArg_ParseTuple(args, "O&", Convert_Vector2, &mouse)) return NULL;
 
 	Draw(&state, Vec2(mouse.x, mouse.y));
 
