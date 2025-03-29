@@ -48,23 +48,31 @@ static int Vector2_Init(Vector2Object *self, PyObject *args, PyObject *kwds) {
 	return 0;
 }
 
+static PyObject *Vector2_reduce(Vector2Object *self, PyObject *Py_UNUSED(ignored)) {
+	return Py_BuildValue("O(ii)", Py_TYPE(self), self->x, self->y);
+}
+
 static PyMemberDef Vector2_members[] = {
 	{"x", T_INT, offsetof(Vector2Object, x), 0, "X coordinate"},
 	{"y", T_INT, offsetof(Vector2Object, y), 0, "Y coordinate"},
 	{NULL},
 };
 
-static PyTypeObject Vector2Type = {
-	PyVarObject_HEAD_INIT(NULL, 0).tp_name = "aigame.Vector2",
-	.tp_basicsize = sizeof(Vector2Object),
-	.tp_itemsize = 0,
-	.tp_flags = Py_TPFLAGS_DEFAULT,
-	.tp_new = PyType_GenericNew,
-	.tp_init = (initproc)Vector2_Init,
-	.tp_str = (reprfunc)Vector2_Str,
-	.tp_repr = (reprfunc)Vector2_Str,
-	.tp_members = Vector2_members,
+static PyMethodDef Vector2_methods[] = {
+	{"__reduce__", (PyCFunction)Vector2_reduce, METH_NOARGS, "Return state information for pickling"},
+	{NULL},
 };
+
+static PyTypeObject Vector2Type = {PyVarObject_HEAD_INIT(NULL, 0).tp_name = "aigame.Vector2",
+								   .tp_basicsize = sizeof(Vector2Object),
+								   .tp_itemsize = 0,
+								   .tp_flags = Py_TPFLAGS_DEFAULT,
+								   .tp_new = PyType_GenericNew,
+								   .tp_init = (initproc)Vector2_Init,
+								   .tp_str = (reprfunc)Vector2_Str,
+								   .tp_repr = (reprfunc)Vector2_Str,
+								   .tp_members = Vector2_members,
+								   .tp_methods = Vector2_methods};
 
 static PyObject *Vector2_New(int x, int y) {
 	Vector2Object *obj = (Vector2Object *)Vector2Type.tp_new(&Vector2Type, NULL, NULL);

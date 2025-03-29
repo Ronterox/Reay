@@ -1,3 +1,4 @@
+from concurrent.futures import ProcessPoolExecutor
 import random as rng
 import aigame
 
@@ -19,7 +20,8 @@ State = dict[str, Direction]
 
 class Game:
     def __init__(self) -> None:
-        aigame.init()
+        self.init = False
+
         self.player = None
         self.score = 0
 
@@ -60,12 +62,6 @@ class Game:
         state, reward = self.env_model(game_state, player, self.score > score, action[0])
         return state, reward, game_state.is_dead
 
-    # state ->
-    # rx,ry
-    # 10t
-    # 5x5
-    # x,y
-    # tx,ty
     def env_model(self, state: aigame.GameState, player: aigame.Vector2, safe: bool, action: Direction) -> tuple[State, int]:
         assert action in self.actions, 'Invalid action'
         assert len(self.actions) == 5, 'Action space must be 5'
@@ -113,10 +109,16 @@ class Game:
         return {key: action}, reward
 
     def reset(self) -> tuple[State, bool]:
+        if not self.init:
+            aigame.init()
+            self.init = True
+
         game = aigame.update(self.mouse, False, True)
+
         self.mouse = aigame.Vector2(0, 0)
         self.player = game.player_pos
         self.score = 0
+
         return self.env_model(game, self.player, False, self.actions[0])[0], False
 
     def render(self) -> None:
@@ -126,52 +128,91 @@ class Game:
         aigame.close()
 
 
-game = Game()
-
-epsilon = 1.
-eps_decay = 0.995
-eps_min = 0.01
-
-episodes = 100
-total_reward = 0
-
-
 def none() -> tuple[Direction, int]:
     return Direction.NONE, 0
 
 
-best = defaultdict(none)
+def train_agent(game: Game, best: defaultdict, episodes: int) -> tuple[defaultdict, float]:
+    epsilon = .8
+    eps_decay = 0.995
+    eps_min = 0.01
+    total_reward = 0
 
-for i in range(episodes):
-    state, done = game.reset()
-    print(f'Round {i+1}')
+    for i in range(episodes):
+        state, done = game.reset()
+        # print(f'Round {i+1}')
 
-    round_reward = 0
-    frames = 0
-    while not done:
-        if frames % 4 == 0:
-            name = list(state.keys())[0]
+        round_reward = 0
+        frames = 0
+        while not done:
+            if frames % 4 == 0:
+                name = list(state.keys())[0]
 
-            if rng.random() < epsilon:
-                state, reward, done = game.step(game.sample())
+                if rng.random() < epsilon:
+                    state, reward, done = game.step(game.sample())
+                else:
+                    state, reward, done = game.step((best[name][0], True))
+
+                if reward > best[name][1]:
+                    best[name] = (state[name], reward)
+
+                round_reward += reward
+                epsilon = max(eps_min, epsilon * eps_decay)
             else:
-                state, reward, done = game.step((best[name][0], True))
+                state, reward, done = game.step((Direction.NONE, False))
 
-            if reward > best[name][1]:
-                best[name] = (state[name], reward)
+            # game.render()
+            frames += 1
 
-            round_reward += reward
-            epsilon = max(eps_min, epsilon * eps_decay)
-        else:
-            state, reward, done = game.step((Direction.NONE, False))
+        total_reward += round_reward
+        # print(f'Round reward: {round_reward}')
 
-        # game.render()
-        frames += 1
+    game.close()
 
-    total_reward += round_reward
-    print(f'Round reward: {round_reward}')
+    fitness = total_reward / episodes
+    # print('=' * 20)
+    # print(f'Moves learned: {len(best)}')
+    # print(f"Fitness: {fitness}")
 
-print(f'Moves learned: {len(best)}')
-print(f"Fitness: {total_reward / episodes}")
+    return best, fitness
 
-game.close()
+
+def deploy_agents(moves: list[defaultdict], episodes: int) -> list[tuple[defaultdict, float]]:
+    with ProcessPoolExecutor() as executor:
+        print('=' * 20)
+        print(f'Training {len(moves)} agents')
+        futures = [executor.submit(train_agent, Game(), m, episodes) for m in moves]
+        results = [f.result() for f in futures]
+
+    print('=' * 20)
+    print("Agents trained", len(results))
+    return results
+
+
+if __name__ == '__main__':
+    elitism = 0.1
+    mutation_rate = 0.2
+
+    agents = 30
+    episodes = 100
+    generations = 5
+
+    children = [defaultdict(none) for _ in range(agents)]
+
+    for i in range(1, generations + 1):
+        print('=' * 20)
+        print(f"Generation {i}...")
+        results = deploy_agents((children * agents)[:agents], episodes)
+        bests = sorted(results, key=lambda x: x[1], reverse=True)[:int(elitism * len(results))]
+
+        children = []
+        for (mom, mfit), (dad, dfit) in zip(bests[:-1], bests[1:]):
+            print(f'Parents: {mfit}, {dfit}')
+            print(f'Moves: {len(mom)}, {len(dad)}')
+            child = defaultdict(none)
+            for key in mom.keys() | dad.keys():
+                if key in mom and key in dad:
+                    child[key] = dad[key] if rng.random() < mutation_rate else mom[key]
+                else:
+                    child[key] = mom[key] if key in mom else dad[key]
+            children.extend([mom, dad, child])
