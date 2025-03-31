@@ -1,9 +1,11 @@
+import matplotlib.pyplot as plt
 import random as rng
 import aigame
 import json
 
 from concurrent.futures import ProcessPoolExecutor
 from collections import defaultdict
+from rich.progress import track
 from enum import IntEnum
 
 
@@ -161,13 +163,13 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
         round_reward = 0
         frames = 0
 
-        acc_state = State(default=Direction.NONE)
+        acc_action = State(default=Direction.NONE)
         acc_reward = 0
         acc_name = 'default'
         while not done:
             if frames % 5 == 0:
                 if render:
-                    print(acc_state[acc_name], acc_reward)
+                    print(acc_action, acc_reward)
 
                 if rng.random() < game.epsilon:
                     state, reward, done = game.step(game.sample())
@@ -175,7 +177,7 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
                     state, reward, done = game.step((best[list(state.keys())[0]][0], True))
 
                 acc_name = list(state.keys())[0]
-                acc_state = state
+                acc_action = state[acc_name]
                 acc_reward = reward
                 game.epsilon = max(game.eps_min, game.epsilon * game.eps_decay)
             else:
@@ -183,8 +185,8 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
                 acc_reward += reward
 
                 b_move, b_reward = best[acc_name]
-                if acc_reward > b_reward or acc_state[acc_name] == b_move and acc_reward != b_reward:
-                    best[acc_name] = (acc_state[acc_name], acc_reward)
+                if acc_reward > b_reward or acc_action == b_move and acc_reward != b_reward:
+                    best[acc_name] = (acc_action, acc_reward)
 
             round_reward += reward
 
@@ -202,7 +204,6 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
 
     fitness = total_score / episodes
     if render:
-        # TODO: Plot reward behaviour
         print('=' * 20)
         print(f'Moves learned: {len(best)}')
         print(f"Fitness: {fitness}")
@@ -228,18 +229,27 @@ if __name__ == '__main__':
 
     agents = 50
     episodes = 100
-    generations = 50
+    generations = 100
 
     children = [defaultdict(none) for _ in range(agents)]
+    averages = []
+    best_avg = 0
 
-    # TODO: rich for time approx bar
-    for i in range(1, generations + 1):
+    for i in track(range(1, generations + 1)):
         print('=' * 20)
         print(f"Generation {i}...")
         results = deploy_agents((children * agents)[:agents], episodes)
         bests = sorted(results, key=lambda x: x[1], reverse=True)[:int(elitism * len(results))]
 
-        print(f'Overall Average: {sum([x[1] for x in results]) / len(results)}')
+        overall_avg = sum([x[1] for x in results]) / len(results)
+        averages.append(overall_avg)
+
+        print(f'Overall Average: {overall_avg}')
+
+        if overall_avg >= best_avg:
+            best_avg = overall_avg
+            with open('best.json', 'w') as f:
+                json.dump(bests[0][0], f)
 
         children = []
         for (mom, mfit), (dad, dfit) in zip(bests[:-1], bests[1:]):
@@ -253,10 +263,8 @@ if __name__ == '__main__':
                     child[key] = mom[key] if key in mom else dad[key]
             children.extend([mom, dad, child])
 
+    plt.plot(averages)
+    plt.show()
+
     d, f = train_agent(Game(epsilon=0.), children[0], episodes, render=True)
     print(d, f)
-
-    # TODO: Plot fitness overall information
-
-    with open('best.json', 'w') as f:
-        json.dump(d, f)
