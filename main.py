@@ -61,6 +61,9 @@ class Game:
 
         return state, reward, game_state.is_dead
 
+    def dist(self, a: aigame.Vector2, b: aigame.Vector2) -> tuple[int, int]:
+        return abs(a.x - b.x), abs(a.y - b.y)
+
     def env_model(self, old_state: aigame.GameState, new_state: aigame.GameState, action: Direction) -> tuple[State, int]:
         assert action in self.actions, 'Invalid action'
         assert len(self.actions) == 5, 'Action space must be 5'
@@ -80,20 +83,22 @@ class Game:
 
         reward = 0
 
-        old_distance = abs(player.x - safezone.x) + abs(player.y - safezone.y)
-        new_distance = abs(new_state.player_pos.x - new_state.safezone.x) + \
-            abs(new_state.player_pos.y - new_state.safezone.y)
+        old_distx, old_disty = self.dist(player, safezone)
+        new_distx, new_disty = self.dist(new_state.player_pos, new_state.safezone)
 
-        if new_distance < old_distance:
+        if new_distx < old_distx or new_disty < old_disty:
             reward += 2
-        elif new_distance > old_distance:
+        else:
             reward -= 1
 
+        sz_dist_x, sz_dist_y = self.dist(safezone, new_state.safezone)
         if old_state.score < new_state.score:
             reward += 5
+        elif (sz_dist_x != 0 or sz_dist_y != 0):
+            reward -= 120
 
         if new_state.is_dead:
-            reward = -100
+            reward = -120
 
         key = ''
         traps = [(t.x, t.y) for t in old_state.traps]
@@ -146,7 +151,7 @@ def none() -> tuple[Direction, float]:
 
 
 def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = False) -> tuple[defaultdict, float]:
-    total_reward = 0
+    total_score = 0
 
     for i in range(episodes):
         state, done = game.reset()
@@ -160,7 +165,7 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
         acc_reward = 0
         acc_name = 'default'
         while not done:
-            if frames % 20 == 0:
+            if frames % 5 == 0:
                 if render:
                     print(acc_state[acc_name], acc_reward)
 
@@ -177,7 +182,8 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
                 state, reward, done = game.step((Direction.NONE, False))
                 acc_reward += reward
 
-                if acc_reward > best[acc_name][1]:
+                b_move, b_reward = best[acc_name]
+                if acc_reward > b_reward or acc_state[acc_name] == b_move and acc_reward != b_reward:
                     best[acc_name] = (acc_state[acc_name], acc_reward)
 
             round_reward += reward
@@ -187,14 +193,16 @@ def train_agent(game: Game, best: defaultdict, episodes: int, render: bool = Fal
 
             frames += 1
 
-        total_reward += round_reward
+        total_score += game.state.score
+
         if render:
             print(f'Round reward: {round_reward}')
 
     game.close()
 
-    fitness = total_reward / episodes
+    fitness = total_score / episodes
     if render:
+        # TODO: Plot reward behaviour
         print('=' * 20)
         print(f'Moves learned: {len(best)}')
         print(f"Fitness: {fitness}")
@@ -220,10 +228,11 @@ if __name__ == '__main__':
 
     agents = 50
     episodes = 100
-    generations = 10
+    generations = 50
 
     children = [defaultdict(none) for _ in range(agents)]
 
+    # TODO: rich for time approx bar
     for i in range(1, generations + 1):
         print('=' * 20)
         print(f"Generation {i}...")
@@ -246,6 +255,8 @@ if __name__ == '__main__':
 
     d, f = train_agent(Game(epsilon=0.), children[0], episodes, render=True)
     print(d, f)
+
+    # TODO: Plot fitness overall information
 
     with open('best.json', 'w') as f:
         json.dump(d, f)
