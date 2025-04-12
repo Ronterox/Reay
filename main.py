@@ -224,14 +224,15 @@ def deploy_agents(moves: list[defaultdict], episodes: int) -> list[tuple[default
 
 
 if __name__ == '__main__':
-    elitism = 0.1
+    elitism = 0.2
     mutation_rate = 0.2
 
-    agents = 50
+    agents = 10
     episodes = 100
-    generations = 100
+    generations = 5
 
     children = [defaultdict(none) for _ in range(agents)]
+
     averages = []
     best_avg = 0
 
