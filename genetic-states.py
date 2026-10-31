@@ -66,7 +66,7 @@ class Game:
 
         # ---------------------
         states_indexes = np.arange(aigame.CELLS_LIMIT ** 2).reshape(aigame.CELLS_LIMIT, -1)
-        px, py = game.player_pos.y, game.player_pos.x
+        px, py = game.player_pos.x, game.player_pos.y
 
         state = np.zeros((10,), np.uint8)
         state[0] = states_indexes[py, px]
