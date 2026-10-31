@@ -10,10 +10,10 @@ main:
 	$(CC) $(CFLAGS) src/$@.c -o $@ $(LIBS_PATH) $(CLIBS)
 
 aigame.so:
-	$(CC) -shared -o $@ -fPIC src/pylib.c $(python3-config --cflags --ldflags) $(LIBS_PATH) $(CLIBS)
+	$(CC) -shared -o $@ -fPIC src/pylib.c $(shell python3-config --includes --ldflags) $(LIBS_PATH) $(CLIBS)
 
-run-python: main.py clean aigame.so
-	python3 $<
+run-python: genetic.py clean aigame.so
+	uv run $<
 
 run: clean main
 	./main

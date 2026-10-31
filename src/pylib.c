@@ -1,6 +1,6 @@
 #include "main.c"
-#include <python3.10/Python.h>
-#include <python3.10/structmember.h>
+#include <Python.h>
+#include <structmember.h>
 #include <stdio.h>
 
 typedef struct {
