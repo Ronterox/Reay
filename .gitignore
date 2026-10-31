@@ -54,3 +54,4 @@ vcpkg_installed/
 .python-version
 uv.lock
 best.json
+.omc/
