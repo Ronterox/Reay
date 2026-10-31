@@ -22,8 +22,9 @@ State = dict[str, Direction]
 
 
 class Game:
-    def __init__(self, epsilon: float = 1.0) -> None:
+    def __init__(self, epsilon: float = 1.0, window: bool = False) -> None:
         self.epsilon = epsilon
+        self.window = window  # open a raylib window; training workers run headless
         self.eps_decay = 0.995
         self.eps_min = 0.01
 
@@ -130,7 +131,7 @@ class Game:
 
     def reset(self) -> tuple[State, bool]:
         if not self.init:
-            aigame.init()
+            aigame.init(self.window)
             self.init = True
 
         game = aigame.update(self.mouse, False, True)
@@ -267,5 +268,5 @@ if __name__ == '__main__':
     plt.plot(averages)
     plt.show()
 
-    d, f = train_agent(Game(epsilon=0.), children[0], episodes, render=True)
+    d, f = train_agent(Game(epsilon=0., window=True), children[0], episodes, render=True)
     print(d, f)

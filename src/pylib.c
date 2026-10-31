@@ -1,7 +1,7 @@
 #include "main.c"
 #include <Python.h>
-#include <structmember.h>
 #include <stdio.h>
+#include <structmember.h>
 
 typedef struct {
 	PyObject_HEAD;
@@ -134,18 +134,23 @@ static PyObject *draw(PyObject *self, PyObject *args) {
 
 	if (!PyArg_ParseTuple(args, "O&", Convert_Vector2, &mouse)) return NULL;
 
-	Draw(&state, Vec2(mouse.x, mouse.y));
+	if (IsWindowReady()) Draw(&state, Vec2(mouse.x, mouse.y)); // no-op when headless
 
 	Py_RETURN_NONE;
 }
 
 static PyObject *init(PyObject *self, PyObject *args) {
+	int render = 1;
+
+	if (!PyArg_ParseTuple(args, "|p", &render)) return NULL;
+
+	if (render && !IsWindowReady()) InitGameWindow();
 	state = InitGame();
 	Py_RETURN_NONE;
 }
 
 static PyObject *close_window(PyObject *self, PyObject *args) {
-	CloseWindow();
+	if (IsWindowReady()) CloseWindow();
 	Py_RETURN_NONE;
 }
 
@@ -153,7 +158,7 @@ static PyObject *close_window(PyObject *self, PyObject *args) {
 static PyMethodDef methods[] = {
 	{"update", update, METH_VARARGS, "Updates the game"},
 	{"draw", draw, METH_VARARGS, "Draws the game"},
-	{"init", init, METH_NOARGS, "Initializes the game"},
+	{"init", init, METH_VARARGS, "init(render=True): initializes the game, opening a window only if render"},
 	{"close", close_window, METH_NOARGS, "Closes the window"},
 	{NULL, NULL, 0, NULL},
 };

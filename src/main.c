@@ -144,12 +144,17 @@ void Draw(State *s, const Vector2 mouse) {
 	EndDrawing();
 }
 
-State InitGame(void) {
+void InitGameWindow(void) {
 	SetTraceLogLevel(LOG_ERROR);
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raey");
 
 	HideCursor();
 	SetTargetFPS(60);
+}
+
+// Pure game state, no window needed. Call after InitGameWindow() if rendering,
+// since InitWindow() reseeds the RNG.
+State InitGame(void) {
 	SetRandomSeed(2500);
 
 	State state = {
@@ -170,6 +175,7 @@ State InitGame(void) {
 }
 
 int main(void) {
+	InitGameWindow();
 	State state = InitGame();
 
 	while (!WindowShouldClose()) // Detect window close button or ESC key

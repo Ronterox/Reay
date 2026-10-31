@@ -51,8 +51,8 @@ def draw(mouse: Vector2):
     pass
 
 
-def init():
-    """Initializes the game"""
+def init(render: bool = True):
+    """Initializes the game, opening a window only if render"""
     pass
 
 
