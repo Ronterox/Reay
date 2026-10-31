@@ -124,10 +124,8 @@ class Game:
             key += 'U' if py > sz.y else 'D'
         elif py == sz.y:
             key += 'L' if px > sz.x else 'R'
-        elif px < sz.x:
-            key += 'XRU' if py < sz.y else 'XRD'
-        elif px > sz.x:
-            key += 'XLU' if py < sz.y else 'XRD'
+        else:
+            key += 'X' + ('R' if px < sz.x else 'L') + ('U' if py > sz.y else 'D')
 
         return {key: action}, reward
 
