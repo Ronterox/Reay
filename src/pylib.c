@@ -31,9 +31,18 @@ static PyMemberDef GameState_members[] = {
 	{NULL},
 };
 
+static void GameState_dealloc(GameStateObject *self) {
+	Py_XDECREF(self->cells);
+	Py_XDECREF(self->traps);
+	Py_XDECREF(self->safezone);
+	Py_XDECREF(self->player_pos);
+	Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
 static PyTypeObject GameStateType = {
 	PyVarObject_HEAD_INIT(NULL, 0).tp_name = "aigame.GameState",
 	.tp_basicsize = sizeof(GameStateObject),
+	.tp_dealloc = (destructor)GameState_dealloc,
 	.tp_itemsize = 0,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
 	.tp_new = PyType_GenericNew,
@@ -95,9 +104,9 @@ static int Convert_Vector2(PyObject *obj, void *ptr) {
 
 static PyObject *update(PyObject *self, PyObject *args) {
 	Vector2Object mouse;
-	bool click, reset;
+	int click, reset; // "p" writes a C int, never a bool
 
-	if (!PyArg_ParseTuple(args, "O&ii", Convert_Vector2, &mouse, &click, &reset)) return NULL;
+	if (!PyArg_ParseTuple(args, "O&pp", Convert_Vector2, &mouse, &click, &reset)) return NULL;
 
 	Update(&state, Vec2(mouse.x, mouse.y), click, reset);
 
@@ -127,17 +136,17 @@ static PyObject *draw(PyObject *self, PyObject *args) {
 
 	Draw(&state, Vec2(mouse.x, mouse.y));
 
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 static PyObject *init(PyObject *self, PyObject *args) {
 	state = InitGame();
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 static PyObject *close_window(PyObject *self, PyObject *args) {
 	CloseWindow();
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 // Method definition
