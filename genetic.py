@@ -50,11 +50,13 @@ class Game:
         assert self.state is not None, 'Game not initialized with reset()'
 
         sizew = aigame.SCREEN_WIDTH // aigame.CELLS_LIMIT
+        sizeh = aigame.SCREEN_HEIGHT // aigame.CELLS_LIMIT
 
+        # Click the centre of the target cell (screen y grows downward)
         direction = self.action_map[action[0]]
         self.mouse = aigame.Vector2(
-            (self.state.player_pos.x + direction.x) * sizew,
-            (self.state.player_pos.y + direction.y) * sizew,
+            (self.state.player_pos.x + direction.x) * sizew + sizew // 2,
+            (self.state.player_pos.y + direction.y) * sizeh + sizeh // 2,
         )
 
         game_state = aigame.update(self.mouse, action[1], False)
