@@ -1,4 +1,4 @@
-#include "main.c"
+#include "game.h"
 #include <Python.h>
 #include <stdio.h>
 #include <structmember.h>
