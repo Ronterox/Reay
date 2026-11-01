@@ -1,0 +1,7 @@
+.{
+    .name = .aigame,
+    .version = "0.1.0",
+    .fingerprint = 0xe42786f04980a12d,
+    .minimum_zig_version = "0.16.0",
+    .paths = .{ "build.zig", "build.zig.zon", "src" },
+}

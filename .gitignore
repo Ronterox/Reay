@@ -56,3 +56,11 @@ uv.lock
 best.json
 .omc/
 runs/
+
+# binding benchmark builds
+bindings/build/
+bindings/**/target/
+bindings/**/build-cmake/
+bindings/**/zig-out/
+bindings/**/.zig-cache/
+__pycache__/

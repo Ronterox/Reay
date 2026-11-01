@@ -10,3 +10,14 @@ dependencies = [
     "rich>=14.0.0",
     "typing-extensions>=4.13.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+bindings = [
+    "cffi>=2.1.1",
+    "maturin>=1.16.0",
+    "nanobind>=3.1.0",
+    "setuptools>=84.2.1",
+]

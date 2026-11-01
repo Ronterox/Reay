@@ -1,0 +1,15 @@
+[package]
+name = "aigame"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# experimental-inspect embeds type info in the .so so `maturin generate-stubs` can write aigame.pyi
+pyo3 = { version = "0.30", features = ["extension-module", "experimental-inspect"] }
+
+[build-dependencies]
+bindgen = "0.73"
+cc = "1"

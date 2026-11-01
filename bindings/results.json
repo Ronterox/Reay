@@ -1,0 +1,72 @@
+{
+  "c_capi": {
+    "timings": {
+      "Vector2(x, y)": 162.2409384999628,
+      "v.x read": 66.83976819986128,
+      "draw() headless": 132.05482000012125,
+      "update()": 839.7521440019773,
+      "update() + read all": 2149.084379998385
+    },
+    "glue_sloc": 176,
+    "build_sloc": 0,
+    "framework_sloc": 0,
+    "so_kib": 1381.828125,
+    "stubs": "hand-written"
+  },
+  "c_cffi": {
+    "timings": {
+      "Vector2(x, y)": 272.4891359994217,
+      "v.x read": 57.12353080016328,
+      "draw() headless": 467.2024620012962,
+      "update()": 13182.789199981926,
+      "update() + read all": 14114.688000063325
+    },
+    "glue_sloc": 111,
+    "build_sloc": 12,
+    "framework_sloc": 0,
+    "so_kib": 1364.578125,
+    "stubs": "inline hints (Python shim)"
+  },
+  "c_nanobind": {
+    "timings": {
+      "Vector2(x, y)": 174.79441649993532,
+      "v.x read": 77.62769820001267,
+      "draw() headless": 98.89866500016069,
+      "update()": 501.32634400142706,
+      "update() + read all": 5431.463459972292
+    },
+    "glue_sloc": 61,
+    "build_sloc": 27,
+    "framework_sloc": 0,
+    "so_kib": 1356.4921875,
+    "stubs": "generated (nanobind stubgen)"
+  },
+  "rust_pyo3": {
+    "timings": {
+      "Vector2(x, y)": 163.63720299978013,
+      "v.x read": 75.05435480015876,
+      "draw() headless": 112.42082850003499,
+      "update()": 1989.7660199967504,
+      "update() + read all": 3924.959559990384
+    },
+    "glue_sloc": 117,
+    "build_sloc": 59,
+    "framework_sloc": 0,
+    "so_kib": 1847.640625,
+    "stubs": "generated (PyO3 introspection)"
+  },
+  "zig": {
+    "timings": {
+      "Vector2(x, y)": 153.76387949982018,
+      "v.x read": 72.67843499976152,
+      "draw() headless": 92.88513419996889,
+      "update()": 833.4569460021157,
+      "update() + read all": 2353.504349994182
+    },
+    "glue_sloc": 60,
+    "build_sloc": 49,
+    "framework_sloc": 392,
+    "so_kib": 1488.140625,
+    "stubs": "generated (own comptime)"
+  }
+}
