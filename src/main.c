@@ -104,10 +104,11 @@ void Update(State *s, const Vector2 mouse, const bool click, const bool reset) {
 		s->playerPos = Vec2(0, 0);
 		s->spritePos = Vec2(0, 0);
 		s->trapSize = Vec2(0, 0);
-		s->safeZone = GetSafeZone(s->trapPositions);
 		s->score = 0;
 
+		// Traps first: the safe zone must be picked against the new traps, not the old ones
 		fori(i, TRAPS_AMOUNT) { s->trapPositions[i] = Vec2(rng(CELLS_LIMIT), rng(CELLS_LIMIT)); }
+		s->safeZone = GetSafeZone(s->trapPositions);
 	}
 }
 
